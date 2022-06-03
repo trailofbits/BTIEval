@@ -1,0 +1,3 @@
+[submodule "BTIGhidra"]
+	path = BTIGhidra
+	url = git@github.com:trailofbits/BTIGhidra.git

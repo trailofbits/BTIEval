@@ -1,0 +1,7 @@
+
+include 'BTIEval', 'BTIGhidra' // , 'json-schema-validator'
+
+project(":BTIGhidra").projectDir = file('BTIGhidra/plugin')
+
+// Nested directory location
+// project(':json-schema-validator').projectDir = file('dependencies/json-schema-validator')
