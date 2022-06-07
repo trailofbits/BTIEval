@@ -25,3 +25,13 @@ build
 aggregate_evaluation_data/target
 .gradle
 .vscode
+
+# CWE checker scripts
+BTIEval/ghidra_scripts/AnalysisOptPrescript.java
+BTIEval/ghidra_scripts/PcodeExtractor.java
+BTIEval/ghidra_scripts/bil
+BTIEval/ghidra_scripts/internal
+BTIEval/ghidra_scripts/serializer
+BTIEval/ghidra_scripts/symbol
+BTIEval/ghidra_scripts/term
+BTIEval/ghidra_scripts/LICENSE
