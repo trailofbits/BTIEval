@@ -50,7 +50,7 @@ public class EvaluatedTypesCollector {
 
   public void generateDWARFConstraints() throws IOException {
     this.applyDWARFAnalysis();
-    this.generateDWARFConstraints();
+    this.generateTypeSketches();
   }
 
   void applyDWARFAnalysis() {

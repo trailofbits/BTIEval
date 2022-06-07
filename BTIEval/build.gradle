@@ -159,6 +159,14 @@ task copyNativeDependencies(type: Copy, dependsOn: copyRustEval) {
     into layout.projectDirectory.dir("lib/os")
 }
 
+task copyCWECheckerScripts(type: Copy) {
+    description = "Copies the submodule'd CWE Checker Ghidra scripts"
+
+    from "../BTIGhidra/binary_type_inference/cwe_checker/src/ghidra/p_code_extractor"
+    from "../BTIGhidra/binary_type_inference/cwe_checker/LICENSE"
+    into layout.projectDirectory.dir("ghidra_scripts")
+}
+
 // Unit tests
 test {
     useJUnit()
@@ -278,7 +286,7 @@ buildExtension {
     exclude 'gradle*'
     exclude 'lib/os'
 }
-buildExtension.dependsOn copyRustEval
+buildExtension.dependsOn copyRustEval, copyCWECheckerScripts
 
 protobuf {
     protoc {
