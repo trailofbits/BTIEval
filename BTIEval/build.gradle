@@ -116,6 +116,7 @@ sourceSets {
     main {
         java {
             srcDirs 'src/main/java'
+            srcDirs 'ghidra_scripts'
         }
 
         proto {
@@ -137,12 +138,33 @@ sourceSets {
     }
 }
 
+task buildRustEval(type: Exec) {
+    workingDir '../aggregate_evaluation_data'
+    commandLine 'cargo', 'build', '--release'
+
+    standardOutput new LogOutputStream(logger, LogLevel.INFO)
+    errorOutput    new LogOutputStream(logger, LogLevel.ERROR)
+
+    outputs.upToDateWhen { false } // ensures never cached, always runs if user enables
+}
+
+task copyRustEval(type: Copy, dependsOn: buildRustEval) {
+    from '../aggregate_evaluation_data/target/release/compute_type_differences'
+    into layout.projectDirectory.dir("os/${currentPlatformName}")
+}
+
+// Copy native dependencies. Required for tests to find os-specific executables
+task copyNativeDependencies(type: Copy, dependsOn: copyRustEval) {
+    from layout.projectDirectory.dir("os")
+    into layout.projectDirectory.dir("lib/os")
+}
+
 // Unit tests
 test {
     useJUnit()
 
     // Do format linting before tests
-    dependsOn spotlessCheck
+    dependsOn spotlessCheck, copyNativeDependencies
 }
 
 // Longer integration tests
@@ -160,7 +182,7 @@ tasks.register('integrationTest', Test) {
     // JVM for each test...
     forkEvery 1
 
-    dependsOn spotlessCheck
+    dependsOn spotlessCheck, copyNativeDependencies
 
     shouldRunAfter test
 }
@@ -222,6 +244,7 @@ task copyZip(type: Copy) {
     dependsOn buildExtension
 }
 
+
 task installZip(type: Exec) {
     group = "Installation"
     description = "Installs the zip package in installed Ghidra's default extension directory"
@@ -255,7 +278,7 @@ buildExtension {
     exclude 'gradle*'
     exclude 'lib/os'
 }
-buildExtension.dependsOn
+buildExtension.dependsOn copyRustEval
 
 protobuf {
     protoc {
