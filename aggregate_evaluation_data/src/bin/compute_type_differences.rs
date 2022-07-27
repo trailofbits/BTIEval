@@ -109,7 +109,12 @@ fn main() -> anyhow::Result<()> {
         Ok(())
     };
 
-    let skb = SketchBuilder::new(if_job.get_lattice(), &lattice_elems, &add_new_var);
+    let skb = SketchBuilder::new(
+        if_job.get_lattice(),
+        &lattice_elems,
+        &add_new_var,
+        if_job.get_file_logger(),
+    );
     let dwarf_sketches = dwarf_constraints
         .into_iter()
         .map(|(tid, constraint_set)| {
@@ -136,24 +141,23 @@ fn main() -> anyhow::Result<()> {
         .into_iter()
         .filter_map(|target_tid| {
             dwarf_sketches.get(target_tid).and_then(|dwarf_sketch| {
-                let mut sk = universal_inferred_supergraph.get_representing_sketch(
+                let sk = universal_inferred_supergraph.get_representing_sketch(
                     DerivedTypeVar::new(constraint_generation::tid_to_tvar(&target_tid)),
                 );
-                if sk.len() != 1 {
-                    None
-                } else {
-                    Some((dwarf_sketch, sk.remove(0).1))
-                }
+
+                sk.into_iter()
+                    .next()
+                    .map(|(_, actual_sketch)| (dwarf_sketch, actual_sketch))
             })
         });
 
-    let comparisons: Vec<EvaluatedVariable<LatticeBounds<CustomLatticeElement>>> = test_pairs
+    let comparisons: Vec<EvaluatedVariable<CustomLatticeElement>> = test_pairs
         .map(|(expected_type, actual_type)| {
             aggregate_evaluation_data::compare_variable(expected_type, &actual_type)
         })
         .collect();
 
-    let output_file = std::fs::File::create(matches.value_of("out").unwrap())?;
+    let output_file = std::fs::File::create(out_file)?;
 
     serde_json::to_writer(output_file, &comparisons)?;
     Ok(())
