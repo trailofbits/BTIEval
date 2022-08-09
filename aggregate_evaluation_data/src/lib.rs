@@ -6,6 +6,7 @@ use binary_type_inference::constraints::FieldLabel;
 use binary_type_inference::graph_algos::{explore_paths, find_node};
 use binary_type_inference::solver::type_sketch::SketchLabelElement;
 use binary_type_inference::solver::type_sketch::{LatticeBounds, Sketch};
+use cwe_checker_lib::intermediate_representation::Tid;
 use petgraph::graph::NodeIndex;
 use serde::{Deserialize, Serialize};
 
@@ -23,7 +24,7 @@ pub struct NodeComparison<U: Clone + Lattice + Display> {
 pub struct EvaluatedVariable<U: Clone + Lattice + Display> {
     over_precise_language: Option<Sketch<LatticeBounds<U>>>,
     missing_language: Option<Sketch<LatticeBounds<U>>>,
-    incorrect_node_labels: Vec<NodeComparison<U>>,
+    node_labels_to_compare: Vec<NodeComparison<U>>,
 }
 
 fn get_comparisons_between<'a, U>(
@@ -53,7 +54,7 @@ where
             reaching_path.iter(),
         );
 
-        corresponding.map(|dst_nd| (act_nd, dst_nd, reaching_path))
+        corresponding.map(|dst_nd| (dst_nd, act_nd, reaching_path))
     })
 }
 
@@ -134,7 +135,57 @@ where
     EvaluatedVariable {
         over_precise_language: overrefined_language,
         missing_language: missing_language,
-        incorrect_node_labels: generate_node_comparisons(expected_type, actual_type),
+        node_labels_to_compare: generate_node_comparisons(expected_type, actual_type),
+    }
+}
+
+#[derive(Deserialize, Serialize)]
+pub enum LanguageComparison {
+    Incomparable,
+    Underprecise,
+    Overprecise,
+    ExactMatch,
+}
+
+/// Summarizes a comparison into aggregateable facts
+#[derive(Deserialize, Serialize)]
+pub struct ComparisonSummary {
+    type_name: String,
+    languague_result: LanguageComparison,
+    number_of_unsound_node_labels: usize,
+    number_of_nodes_compared: usize,
+}
+
+pub fn summarize_comparison<U>(curr_tid: &Tid, var: &EvaluatedVariable<U>) -> ComparisonSummary
+where
+    U: Lattice + Clone + Display,
+{
+    ComparisonSummary {
+        type_name: curr_tid.get_str_repr().to_owned(),
+        languague_result: match (
+            var.missing_language.is_some(),
+            var.over_precise_language.is_some(),
+        ) {
+            (true, true) => LanguageComparison::Incomparable,
+            (true, false) => LanguageComparison::Underprecise,
+            (false, true) => LanguageComparison::Overprecise,
+            (false, false) => LanguageComparison::ExactMatch,
+        },
+        number_of_unsound_node_labels: var
+            .node_labels_to_compare
+            .iter()
+            .filter(|node_comp| {
+                node_comp
+                    .expected_type_bounds
+                    .get_lower()
+                    .lt(node_comp.actual_type_bounds.get_lower())
+                    || node_comp
+                        .expected_type_bounds
+                        .get_upper()
+                        .gt(node_comp.actual_type_bounds.get_upper())
+            })
+            .count(),
+        number_of_nodes_compared: var.node_labels_to_compare.len(),
     }
 }
 

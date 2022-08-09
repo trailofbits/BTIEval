@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, HashSet};
 use std::path::{Path, PathBuf};
 
-use aggregate_evaluation_data::EvaluatedVariable;
+use aggregate_evaluation_data::{ComparisonSummary, EvaluatedVariable};
 use binary_type_inference::constraints::TypeVariable;
 use binary_type_inference::solver::type_sketch;
 use binary_type_inference::{
@@ -96,7 +96,6 @@ fn main() -> anyhow::Result<()> {
     } else {
         InferenceJob::parse_additional_constraints::<ProtobufDef>(&dwarf_sketche_file)
     }?;
-
     let lattice_elems: HashSet<TypeVariable> = if_job.get_lattice_elems().collect();
 
     let add_new_var = |dtv: &DerivedTypeVar,
@@ -135,7 +134,6 @@ fn main() -> anyhow::Result<()> {
                 .map(|sketch| (tid, sketch))
         })
         .collect::<anyhow::Result<BTreeMap<_, _>>>()?;
-
     let test_pairs = if_job
         .get_interesting_tids()
         .into_iter()
@@ -147,13 +145,16 @@ fn main() -> anyhow::Result<()> {
 
                 sk.into_iter()
                     .next()
-                    .map(|(_, actual_sketch)| (dwarf_sketch, actual_sketch))
+                    .map(|(_, actual_sketch)| (target_tid, dwarf_sketch, actual_sketch))
             })
         });
 
-    let comparisons: Vec<EvaluatedVariable<CustomLatticeElement>> = test_pairs
-        .map(|(expected_type, actual_type)| {
-            aggregate_evaluation_data::compare_variable(expected_type, &actual_type)
+    let comparisons: Vec<ComparisonSummary> = test_pairs
+        .map(|(curr_tid, expected_type, actual_type)| {
+            aggregate_evaluation_data::summarize_comparison(
+                curr_tid,
+                &aggregate_evaluation_data::compare_variable(expected_type, &actual_type),
+            )
         })
         .collect();
 
