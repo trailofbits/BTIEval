@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 use aggregate_evaluation_data::{ComparisonSummary, EvaluatedVariable};
 use binary_type_inference::constraints::TypeVariable;
 use binary_type_inference::solver::type_sketch;
+use binary_type_inference::util;
 use binary_type_inference::{
     constraints::{DerivedTypeVar, FieldLabel},
     graph_algos::mapping_graph::MappingGraph,
@@ -117,7 +118,7 @@ fn main() -> anyhow::Result<()> {
     let dwarf_sketches = dwarf_constraints
         .into_iter()
         .map(|(tid, constraint_set)| {
-            skb.build_and_label_constraints(&constraint_set)
+            skb.build_and_label_constraints(&util::constraint_set_to_subtys(&constraint_set))
                 .and_then(|skg| {
                     let mut sketches = skg.get_representing_sketch(DerivedTypeVar::new(
                         constraint_generation::tid_to_tvar(&tid),

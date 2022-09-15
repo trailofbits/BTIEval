@@ -21,7 +21,7 @@ public class BTIEval {
   public BTIEval(Program prog, boolean should_save_output, Path outputPath) {
     this.prog = prog;
     this.ty_inf = new BinaryTypeInference(
-        this.prog, PreservedFunctionList.createFromExternSection(prog),
+        this.prog, PreservedFunctionList.createFromExternSection(prog, false),
         new ArrayList<>(), new MessageLog() {}, should_save_output);
     this.outputPath = outputPath;
   }

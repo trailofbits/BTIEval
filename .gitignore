@@ -26,6 +26,11 @@ aggregate_evaluation_data/target
 .gradle
 .vscode
 
+#py
+__pycache__
+*.pyc
+
+
 # CWE checker scripts
 BTIEval/ghidra_scripts/AnalysisOptPrescript.java
 BTIEval/ghidra_scripts/PcodeExtractor.java
