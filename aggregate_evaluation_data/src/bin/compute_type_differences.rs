@@ -1,7 +1,8 @@
 use std::collections::{BTreeMap, HashSet};
 use std::path::{Path, PathBuf};
+use std::time::Instant;
 
-use aggregate_evaluation_data::{ComparisonSummary, EvaluatedVariable};
+use aggregate_evaluation_data::{BinaryResult, ComparisonSummary};
 use binary_type_inference::constraints::TypeVariable;
 use binary_type_inference::solver::type_sketch;
 use binary_type_inference::util;
@@ -88,7 +89,9 @@ fn main() -> anyhow::Result<()> {
         InferenceJob::parse::<ProtobufDef>(&job_def, dbg_dir, vec![dwarf_lattice_def])
     }?;
 
+    let before = Instant::now();
     let universal_inferred_supergraph = if_job.infer_labeled_graph()?;
+    let dur = Instant::now() - before;
 
     let dwarf_sketche_file = matches.value_of("dwarf_constraints").unwrap();
 
@@ -159,8 +162,13 @@ fn main() -> anyhow::Result<()> {
         })
         .collect();
 
+    let res = BinaryResult {
+        comparisons,
+        time: dur,
+    };
+
     let output_file = std::fs::File::create(out_file)?;
 
-    serde_json::to_writer(output_file, &comparisons)?;
+    serde_json::to_writer(output_file, &res)?;
     Ok(())
 }
