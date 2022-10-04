@@ -33,9 +33,6 @@ jobs:
           git submodule update --init -- ./BTIGhidra
       - name: Pull Private Submodule binary_type_inference
         env:
-          SSHK: ${{ secrets.RUST_BTI_DEPLOY }}
-      - name: Pull Private Submodule binary_type_inference
-        env:
           SSHK: ${{ secrets.BTI_RUST_DEPLOY }}
         run: |
           mkdir -p $HOME/.ssh
