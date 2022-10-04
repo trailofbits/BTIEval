@@ -50,7 +50,8 @@ jobs:
           echo "$SSHK" > $HOME/.ssh/ssh.key
           chmod 600 $HOME/.ssh/ssh.key
           export GIT_SSH_COMMAND="ssh -i $HOME/.ssh/ssh.key"
-          git submodule update --init -- ./BTIGhidra/binary_type_inference/cwe_checker
+          cd ./BTIGhidra/binary_type_inference/
+          git submodule update --init -- ./cwe_checker
 
       - uses: actions/setup-java@v2
         with:
