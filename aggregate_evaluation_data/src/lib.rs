@@ -1,5 +1,6 @@
 use std::collections::BTreeSet;
 use std::fmt::Display;
+use std::time::Duration;
 
 use alga::general::{AbstractMagma, Additive, Lattice};
 use binary_type_inference::constraints::FieldLabel;
@@ -120,13 +121,13 @@ where
     let maybe_overrefined_language = actual_type.difference(expected_type);
     let maybe_missing_language = expected_type.difference(actual_type);
 
-    let overrefined_language = if !maybe_overrefined_language.empty_language() {
+    let overrefined_language = if !maybe_overrefined_language.empty_language_or_epsilon() {
         Some(maybe_overrefined_language)
     } else {
         None
     };
 
-    let missing_language = if maybe_missing_language.empty_language() {
+    let missing_language = if maybe_missing_language.empty_language_or_epsilon() {
         Some(maybe_missing_language)
     } else {
         None
@@ -147,13 +148,19 @@ pub enum LanguageComparison {
     ExactMatch,
 }
 
+#[derive(Deserialize, Serialize)]
+pub struct BinaryResult {
+    pub comparisons: Vec<ComparisonSummary>,
+    pub time: Duration,
+}
+
 /// Summarizes a comparison into aggregateable facts
 #[derive(Deserialize, Serialize)]
 pub struct ComparisonSummary {
-    type_name: String,
-    languague_result: LanguageComparison,
-    number_of_unsound_node_labels: usize,
-    number_of_nodes_compared: usize,
+    pub type_name: String,
+    pub languague_result: LanguageComparison,
+    pub number_of_unsound_node_labels: usize,
+    pub number_of_nodes_compared: usize,
 }
 
 pub fn summarize_comparison<U>(curr_tid: &Tid, var: &EvaluatedVariable<U>) -> ComparisonSummary
@@ -191,9 +198,5 @@ where
 
 #[cfg(test)]
 mod tests {
-    #[test]
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
-    }
+    use binary_type_inference::solver::type_sketch::Sketch;
 }

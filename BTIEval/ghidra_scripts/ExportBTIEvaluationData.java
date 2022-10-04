@@ -9,7 +9,8 @@ public class ExportBTIEvaluationData extends GhidraScript {
     var eval = new BTIEval(this.currentProgram, true, Path.of(outputPath));
     var success = eval.runEvaluation();
     if (!success) {
-      printerr("Failure exporting: " + currentProgram.getName());
+      throw new RuntimeException("Failure exporting: " +
+                                 currentProgram.getName());
     }
   }
 }

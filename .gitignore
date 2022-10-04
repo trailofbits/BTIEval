@@ -25,6 +25,12 @@ build
 aggregate_evaluation_data/target
 .gradle
 .vscode
+.venv
+
+#py
+__pycache__
+*.pyc
+
 
 # CWE checker scripts
 BTIEval/ghidra_scripts/AnalysisOptPrescript.java

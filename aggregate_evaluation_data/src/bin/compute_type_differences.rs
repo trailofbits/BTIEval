@@ -1,9 +1,11 @@
 use std::collections::{BTreeMap, HashSet};
 use std::path::{Path, PathBuf};
+use std::time::Instant;
 
-use aggregate_evaluation_data::{ComparisonSummary, EvaluatedVariable};
+use aggregate_evaluation_data::{BinaryResult, ComparisonSummary};
 use binary_type_inference::constraints::TypeVariable;
 use binary_type_inference::solver::type_sketch;
+use binary_type_inference::util;
 use binary_type_inference::{
     constraints::{DerivedTypeVar, FieldLabel},
     graph_algos::mapping_graph::MappingGraph,
@@ -82,12 +84,14 @@ fn main() -> anyhow::Result<()> {
 
     let dbg_dir = matches.value_of("debug_out_dir").map(|x| x.to_owned());
     let mut if_job = if matches.is_present("human_readable_input") {
-        InferenceJob::parse::<JsonDef>(&job_def, dbg_dir, vec![dwarf_lattice_def])
+        InferenceJob::parse::<JsonDef>(&job_def, dbg_dir, vec![dwarf_lattice_def], false)
     } else {
-        InferenceJob::parse::<ProtobufDef>(&job_def, dbg_dir, vec![dwarf_lattice_def])
+        InferenceJob::parse::<ProtobufDef>(&job_def, dbg_dir, vec![dwarf_lattice_def], false)
     }?;
 
+    let before = Instant::now();
     let universal_inferred_supergraph = if_job.infer_labeled_graph()?;
+    let dur = Instant::now() - before;
 
     let dwarf_sketche_file = matches.value_of("dwarf_constraints").unwrap();
 
@@ -117,7 +121,7 @@ fn main() -> anyhow::Result<()> {
     let dwarf_sketches = dwarf_constraints
         .into_iter()
         .map(|(tid, constraint_set)| {
-            skb.build_and_label_constraints(&constraint_set)
+            skb.build_and_label_constraints(&util::constraint_set_to_subtys(&constraint_set))
                 .and_then(|skg| {
                     let mut sketches = skg.get_representing_sketch(DerivedTypeVar::new(
                         constraint_generation::tid_to_tvar(&tid),
@@ -158,8 +162,13 @@ fn main() -> anyhow::Result<()> {
         })
         .collect();
 
+    let res = BinaryResult {
+        comparisons,
+        time: dur,
+    };
+
     let output_file = std::fs::File::create(out_file)?;
 
-    serde_json::to_writer(output_file, &comparisons)?;
+    serde_json::to_writer(output_file, &res)?;
     Ok(())
 }
