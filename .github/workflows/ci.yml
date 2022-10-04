@@ -39,7 +39,8 @@ jobs:
           echo "$SSHK" > $HOME/.ssh/ssh.key
           chmod 600 $HOME/.ssh/ssh.key
           export GIT_SSH_COMMAND="ssh -i $HOME/.ssh/ssh.key"
-          git submodule update --init -- ./BTIGhidra/binary_type_inference
+          cd BTIGhidra
+          git submodule update --init -- ./binary_type_inference
 
       - name: Pull Private Submodule CWE_Checker
         env:
