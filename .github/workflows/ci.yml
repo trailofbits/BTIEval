@@ -69,3 +69,12 @@ jobs:
       - name: 'Build and Install Evaluation Plugin'
         run: |
           ./gradlew install
+      - name: 'Get CSmith'
+        run: 
+          wget https://embed.cs.utah.edu/csmith/csmith-2.3.0.tar.gz
+          tar -xf csmith-2.3.0.tar.gz
+          echo "CSMITH_DIR=$(pwd)/csmith-2.3.0" >> $GITHUB_ENV
+      - name: 'Fuzz Infer-Apply Types'
+        run: |
+          cd smith_runner
+          python csmith_runner/main.py --csmith_path $CSMITH_DIR --prop_shell_script ./scripts/interestingness_test_apply_types.sh --num_test_cases 30 --ci

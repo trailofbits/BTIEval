@@ -1,3 +1,4 @@
+from multiprocessing.util import log_to_stderr
 import subprocess
 import argparse
 import tempfile
@@ -15,8 +16,10 @@ class TestCase:
         self.prop_shell_script = prop_shell_script
         self.save_dir = save_dir
         self.tc_id = tc_id
-        self.log_stderr = os.path.join(self.save_dir, f"log_{tc_id}.stderr")
-        self.log_stdout = os.path.join(self.save_dir, f"log_{tc_id}.stdout")
+        self.log_stderr = os.path.join(
+            self.save_dir, f"log_{tc_id}.stderr") if self.save_dir else None
+        self.log_stdout = os.path.join(
+            self.save_dir, f"log_{tc_id}.stdout") if self.save_dir else None
 
     def __enter__(self):
         self.wdir = self.tmpdir.__enter__()
@@ -26,8 +29,10 @@ class TestCase:
         self.tmpdir.__exit__(exc, value, tb)
 
     def run_command(self, args):
-        with open(self.log_stderr, "a+") as lstderr:
-            with open(self.log_stdout, "a+") as lstdout:
+        lstderr_name = self.log_to_stderr if self.log_stderr else "/dev/null"
+        lstdout_name = self.log_stdout if self.log_stdout else "/dev/null"
+        with open(lstderr_name, "a+") as lstderr:
+            with open(lstdout_name, "a+") as lstdout:
                 proc = subprocess.Popen(args, cwd=self.wdir, env={
                                         "CSMITH_PATH": self.csmith_path}, stdout=lstdout, stderr=lstderr)
                 proc.wait()
@@ -45,10 +50,11 @@ class TestCase:
         return self.run_command([self.prop_shell_script])
 
     def save_curr_c_to(self, fstring: str):
-        to_write_to = os.path.join(self.save_dir, fstring.format(self.tc_id))
-        print(to_write_to)
-        shutil.copy(os.path.join(self.wdir, self.fname),
-                    to_write_to)
+        if self.save_dir:
+            to_write_to = os.path.join(
+                self.save_dir, fstring.format(self.tc_id))
+            shutil.copy(os.path.join(self.wdir, self.fname),
+                        to_write_to)
 
 
 def run_test_case(tc: TestCase):
@@ -67,20 +73,21 @@ def main():
                        help="path to csmith root with bin and include dir")
     prser.add_argument("--prop_shell_script", required=True,
                        help="path to interestingness test")
-    prser.add_argument("--save_test_cases", required=True, type=str)
+    prser.add_argument("--save_test_cases", type=str)
     prser.add_argument("--num_test_cases", default=200, type=int)
     prser.add_argument("--ci", action="store_true",
                        help="in ci mode the script exits on failure with an error code")
 
     args = prser.parse_args()
 
-    tcs = [TestCase(os.path.realpath(args.csmith_path), os.path.realpath(args.prop_shell_script), i,  os.path.realpath(args.save_test_cases))
+    tcs = [TestCase(os.path.realpath(args.csmith_path), os.path.realpath(args.prop_shell_script), i,  os.path.realpath(args.save_test_cases) if args.save_test_cases else None)
            for i in range(0, args.num_test_cases)]
 
     for tc in tqdm.tqdm(tcs, total=len(tcs)):
         if run_test_case(tc):
             print("tc failed")
             exit(1)
+    exit(0)
 
 
 if __name__ == "__main__":
