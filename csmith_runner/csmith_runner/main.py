@@ -1,7 +1,6 @@
 import subprocess
 import argparse
 import tempfile
-import multiprocessing
 import os
 import tqdm
 import shutil
@@ -55,12 +54,9 @@ class TestCase:
 def run_test_case(tc: TestCase):
     with tc:
         tc.generate_c()
-        print("generated c")
         if not tc.has_prop():
-            print("does not have prop")
             return False
         else:
-            print("has prop")
             tc.save_curr_c_to("initial_tc_{}.c")
             return True
 
@@ -73,6 +69,8 @@ def main():
                        help="path to interestingness test")
     prser.add_argument("--save_test_cases", required=True, type=str)
     prser.add_argument("--num_test_cases", default=200, type=int)
+    prser.add_argument("--ci", action="store_true",
+                       help="in ci mode the script exits on failure with an error code")
 
     args = prser.parse_args()
 
@@ -80,7 +78,9 @@ def main():
            for i in range(0, args.num_test_cases)]
 
     for tc in tqdm.tqdm(tcs, total=len(tcs)):
-        run_test_case(tc)
+        if run_test_case(tc):
+            print("tc failed")
+            exit(1)
 
 
 if __name__ == "__main__":

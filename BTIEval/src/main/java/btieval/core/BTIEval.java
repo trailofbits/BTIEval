@@ -22,7 +22,7 @@ public class BTIEval {
     this.prog = prog;
     this.ty_inf = new BinaryTypeInference(
         this.prog, PreservedFunctionList.createFromExternSection(prog, false),
-        new ArrayList<>(), new MessageLog() {}, should_save_output);
+        new ArrayList<>(), new MessageLog() {}, should_save_output, false);
     this.outputPath = outputPath;
   }
 
