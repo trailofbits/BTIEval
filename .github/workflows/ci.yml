@@ -70,7 +70,7 @@ jobs:
         run: |
           ./gradlew install
       - name: 'Get CSmith'
-        run: 
+        run: |
           wget https://embed.cs.utah.edu/csmith/csmith-2.3.0.tar.gz
           tar -xf csmith-2.3.0.tar.gz
           echo "CSMITH_DIR=$(pwd)/csmith-2.3.0" >> $GITHUB_ENV
