@@ -69,11 +69,14 @@ jobs:
       - name: 'Build and Install Evaluation Plugin'
         run: |
           ./gradlew install
-      - name: 'Get CSmith'
+      - name: 'Get CSmith and Build'
         run: |
           wget https://embed.cs.utah.edu/csmith/csmith-2.3.0.tar.gz
           tar -xf csmith-2.3.0.tar.gz
           echo "CSMITH_DIR=$(pwd)/csmith-2.3.0" >> $GITHUB_ENV
+          cd csmith-2.3.0
+          ./configure
+          make
       - name:  'Install Python Dependencies'
         run: 
           pip install ./csmith_runner
