@@ -5,7 +5,7 @@ description = ""
 authors = ["2over12 <ian.smith@trailofbits.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.8"
 tqdm = "^4.64.1"
 
 [tool.poetry.dev-dependencies]
