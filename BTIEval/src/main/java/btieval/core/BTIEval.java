@@ -20,42 +20,43 @@ public class BTIEval {
 
   public BTIEval(Program prog, boolean should_save_output, Path outputPath) {
     this.prog = prog;
-    this.ty_inf = new BinaryTypeInference(
-        this.prog, PreservedFunctionList.createFromExternSection(prog, false),
-        new ArrayList<>(), new MessageLog() {}, should_save_output, false);
+    this.ty_inf =
+        new BinaryTypeInference(
+            this.prog,
+            PreservedFunctionList.createFromExternSection(prog, true, true),
+            new ArrayList<>(),
+            new MessageLog() {},
+            should_save_output,
+            false);
     this.outputPath = outputPath;
   }
 
   private Path getTypeDifferenceToolPath() throws OSFileNotFoundException {
-    return Path.of(
-        Application.getOSFile(BTIEval.DEFAULT_TOOL_NAME).getAbsolutePath());
+    return Path.of(Application.getOSFile(BTIEval.DEFAULT_TOOL_NAME).getAbsolutePath());
   }
 
   private Path getOuputFileName() {
-    return Path.of(this.outputPath.toString(),
-                   this.prog.getName() + "_typeeval.json");
+    return Path.of(this.outputPath.toString(), this.prog.getName() + "_typeeval.json");
   }
 
   public boolean runEvaluation() throws Exception {
     this.ty_inf.produceArtifacts();
 
-    var collector =
-        new EvaluatedTypesCollector(this.prog, this.ty_inf.getWorkingDir());
+    var collector = new EvaluatedTypesCollector(this.prog, this.ty_inf.getWorkingDir());
     collector.generateDWARFConstraints();
 
     ProcessBuilder bldr =
         new ProcessBuilder(
-            this.getTypeDifferenceToolPath().toAbsolutePath().toString(),
-            this.ty_inf.getBinaryPath().toAbsolutePath().toString(),
-            this.ty_inf.getIROut().toAbsolutePath().toString(),
-            this.ty_inf.getLatticeJsonPath().toAbsolutePath().toString(),
-            this.ty_inf.getAdditionalConstraintsPath()
-                .toAbsolutePath()
-                .toString(),
-            this.ty_inf.getInterestingTidsPath().toAbsolutePath().toString(),
-            collector.getTargetDWARFConsPath().toAbsolutePath().toString(),
-            collector.getTargetDWARFLattice().toAbsolutePath().toString(),
-            "--out", this.getOuputFileName().toAbsolutePath().toString())
+                this.getTypeDifferenceToolPath().toAbsolutePath().toString(),
+                this.ty_inf.getBinaryPath().toAbsolutePath().toString(),
+                this.ty_inf.getIROut().toAbsolutePath().toString(),
+                this.ty_inf.getLatticeJsonPath().toAbsolutePath().toString(),
+                this.ty_inf.getAdditionalConstraintsPath().toAbsolutePath().toString(),
+                this.ty_inf.getInterestingTidsPath().toAbsolutePath().toString(),
+                collector.getTargetDWARFConsPath().toAbsolutePath().toString(),
+                collector.getTargetDWARFLattice().toAbsolutePath().toString(),
+                "--out",
+                this.getOuputFileName().toAbsolutePath().toString())
             .redirectOutput(new File("/tmp/stdout_eval"))
             .redirectError(new File("/tmp/stderr_eval"));
 
