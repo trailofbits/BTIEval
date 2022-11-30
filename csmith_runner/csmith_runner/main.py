@@ -13,7 +13,8 @@ class TestCase:
         self.csmith_path = csmith_path
         self.csmith_exe = os.path.join(self.csmith_path, "src", "csmith")
         if not os.path.exists(self.csmith_exe):
-            raise RuntimeError("Could not find csmith executable under \"${CSMITH_PATH}/src/csmith\"")
+            raise RuntimeError(
+                "Could not find csmith executable under \"${CSMITH_PATH}/src/csmith\"")
         self.ghidra_install_dir = ghidra_path
         self.fname = "test.c"
         self.prop_shell_script = prop_shell_script
@@ -37,8 +38,8 @@ class TestCase:
         with open(lstderr_name, "a+") as lstderr:
             with open(lstdout_name, "a+") as lstdout:
                 proc = subprocess.Popen(args, cwd=self.wdir,
-                                        env= {"CSMITH_PATH": self.csmith_path,
-                                              "GHIDRA_INSTALL_DIR": self.ghidra_install_dir},
+                                        env={"CSMITH_PATH": self.csmith_path,
+                                             "GHIDRA_INSTALL_DIR": self.ghidra_install_dir},
                                         stdout=lstdout, stderr=lstderr)
                 proc.wait()
                 return proc.returncode == 0
@@ -91,8 +92,9 @@ def main():
     ghidra_path = args.ghidra_path
     if not ghidra_path:
         ghidra_path = os.getenv("GHIDRA_INSTALL_DIR")
-    if not os.path.exists(ghidra_path):
-        raise RuntimeError(f"Please specify a valid ghidra path: {ghidra_path}")
+    if not ghidra_path or (not os.path.exists(ghidra_path)):
+        raise RuntimeError(
+            f"Please specify a valid ghidra path: {ghidra_path}")
 
     if args.save_test_cases:
         os.makedirs(args.save_test_cases, exist_ok=True)
