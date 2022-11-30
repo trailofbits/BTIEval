@@ -1,4 +1,3 @@
-from multiprocessing.util import log_to_stderr
 import subprocess
 import argparse
 import tempfile
@@ -8,10 +7,14 @@ import shutil
 
 
 class TestCase:
-    def __init__(self, csmith_path: str,  prop_shell_script: str, tc_id: int, save_dir: str) -> None:
+    def __init__(self, ghidra_path: str, csmith_path: str,  prop_shell_script: str, tc_id: int, save_dir: str) -> None:
         self.wdir = None
         self.tmpdir = tempfile.TemporaryDirectory()
         self.csmith_path = csmith_path
+        self.csmith_exe = os.path.join(self.csmith_path, "src", "csmith")
+        if not os.path.exists(self.csmith_exe):
+            raise RuntimeError("Could not find csmith executable under \"${CSMITH_PATH}/src/csmith\"")
+        self.ghidra_install_dir = ghidra_path
         self.fname = "test.c"
         self.prop_shell_script = prop_shell_script
         self.save_dir = save_dir
@@ -29,12 +32,14 @@ class TestCase:
         self.tmpdir.__exit__(exc, value, tb)
 
     def run_command(self, args):
-        lstderr_name = self.log_to_stderr if self.log_stderr else "/dev/null"
+        lstderr_name = self.log_stderr if self.log_stderr else "/dev/null"
         lstdout_name = self.log_stdout if self.log_stdout else "/dev/null"
         with open(lstderr_name, "a+") as lstderr:
             with open(lstdout_name, "a+") as lstdout:
-                proc = subprocess.Popen(args, cwd=self.wdir, env={
-                                        "CSMITH_PATH": self.csmith_path}, stdout=lstdout, stderr=lstderr)
+                proc = subprocess.Popen(args, cwd=self.wdir,
+                                        env= {"CSMITH_PATH": self.csmith_path,
+                                              "GHIDRA_INSTALL_DIR": self.ghidra_install_dir},
+                                        stdout=lstdout, stderr=lstderr)
                 proc.wait()
                 return proc.returncode == 0
 
@@ -43,13 +48,13 @@ class TestCase:
             raise RuntimeError("command failed: {args}")
 
     def generate_c(self):
-        self.run_command_expect_success(
-            [os.path.join(self.csmith_path, "src", "csmith"), "-o", self.fname])
+        self.run_command_expect_success([self.csmith_exe, "-o", self.fname])
 
     def has_prop(self):
         return self.run_command([self.prop_shell_script])
 
     def save_curr_c_to(self, fstring: str):
+        print(f"Saving to {fstring} {self.tc_id}")
         if self.save_dir:
             to_write_to = os.path.join(
                 self.save_dir, fstring.format(self.tc_id))
@@ -70,17 +75,29 @@ def run_test_case(tc: TestCase):
 def main():
     prser = argparse.ArgumentParser("csmith tester for BTIGhidra")
     prser.add_argument("--csmith_path", required=True,
-                       help="path to csmith root with bin and include dir")
+                       help="path to csmith build root from source code")
     prser.add_argument("--prop_shell_script", required=True,
                        help="path to interestingness test")
-    prser.add_argument("--save_test_cases", type=str)
+    prser.add_argument("--ghidra_path", type=str,
+                       help="path to Ghidra installation (or taken from environment variable GHIDRA_INSTALL_DIR)")
+    prser.add_argument("--save_test_cases", type=str,
+                       help="path to save test case files")
     prser.add_argument("--num_test_cases", default=200, type=int)
     prser.add_argument("--ci", action="store_true",
                        help="in ci mode the script exits on failure with an error code")
 
     args = prser.parse_args()
 
-    tcs = [TestCase(os.path.realpath(args.csmith_path), os.path.realpath(args.prop_shell_script), i,  os.path.realpath(args.save_test_cases) if args.save_test_cases else None)
+    ghidra_path = args.ghidra_path
+    if not ghidra_path:
+        ghidra_path = os.getenv("GHIDRA_INSTALL_DIR")
+    if not os.path.exists(ghidra_path):
+        raise RuntimeError(f"Please specify a valid ghidra path: {ghidra_path}")
+
+    if args.save_test_cases:
+        os.makedirs(args.save_test_cases, exist_ok=True)
+
+    tcs = [TestCase(ghidra_path, os.path.realpath(args.csmith_path), os.path.realpath(args.prop_shell_script), i,  os.path.realpath(args.save_test_cases) if args.save_test_cases else None)
            for i in range(0, args.num_test_cases)]
 
     for tc in tqdm.tqdm(tcs, total=len(tcs)):
