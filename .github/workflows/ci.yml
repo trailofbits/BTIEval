@@ -72,7 +72,7 @@ jobs:
       - name: "Get CSmith and Build"
         run: |
           wget https://github.com/csmith-project/csmith/archive/refs/heads/csmith-2.3.zip
-          unzip -x
+          unzip -x csmith-2.3.zip
           echo "CSMITH_DIR=$(pwd)/csmith-csmith-2.3" >> $GITHUB_ENV
           cd csmith-csmith-2.3
           ./configure
