@@ -71,10 +71,10 @@ jobs:
           ./gradlew install
       - name: "Get CSmith and Build"
         run: |
-          wget https://embed.cs.utah.edu/csmith/csmith-2.3.0.tar.gz
-          tar -xf csmith-2.3.0.tar.gz
-          echo "CSMITH_DIR=$(pwd)/csmith-2.3.0" >> $GITHUB_ENV
-          cd csmith-2.3.0
+          wget https://github.com/csmith-project/csmith/archive/refs/heads/csmith-2.3.zip
+          unzip -x
+          echo "CSMITH_DIR=$(pwd)/csmith-csmith-2.3" >> $GITHUB_ENV
+          cd csmith-csmith-2.3
           ./configure
           make
       - name: "Install Python Dependencies"
