@@ -33,7 +33,7 @@ plugins {
     id 'eclipse'
     id 'idea'
     id "com.diffplug.spotless" version "6.1.2"
-    id "com.google.protobuf" version "0.8.18"
+ //   id "com.google.protobuf" version "0.8.18"
 }
 
 //----------------------START "DO NOT MODIFY" SECTION------------------------------
@@ -117,16 +117,6 @@ sourceSets {
         java {
             srcDirs 'src/main/java'
             srcDirs 'ghidra_scripts'
-        }
-
-        proto {
-            // In addition to the default 'src/main/proto'
-            srcDir 'data_formats'
-            // In addition to the default '**/*.proto' (use with caution).
-            // Using an extension other than 'proto' is NOT recommended,
-            // because when proto files are published along with class files, we can
-            // only tell the type of a file from its extension.
-            include '*.proto'
         }
     }
 
@@ -296,6 +286,7 @@ buildExtension {
 }
 buildExtension.dependsOn copyRustEval
 
+/*
 protobuf {
     protoc {
         artifact = "com.google.protobuf:protoc:${protobufVersion}"
@@ -303,7 +294,7 @@ protobuf {
     generateProtoTasks {
         all().each { task -> task.dependsOn copyDependencies }
     }
-}
+}*/
 
 // Code style formatting
 spotless {
