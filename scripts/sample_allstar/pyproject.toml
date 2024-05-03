@@ -6,7 +6,7 @@ authors = ["2over12 <ian.smith@trailofbits.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-tqdm = "^4.64.1"
+tqdm = "^4.66.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
